@@ -1,0 +1,406 @@
+Create project
+cd\
+python version—
+pip install virtualenv
+virtualenv env
+env\scripts\activate
+pip install django
+django-admin startproject dj
+open folder dj -> open terminal
+virtualenv env
+env\scripts\activate
+pip install django
+django-admin startproject myproject
+To run
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver
+common things for all programs
+dj\settings.py
+INSTALLED_APPS = [
+'django.contrib.admin',
+'django.contrib.auth',
+'django.contrib.contenttypes',
+'django.contrib.sessions',
+'django.contrib.messages',
+'django.contrib.staticfiles',
+'myapp',
+]
+dj\urls.py
+from django.contrib import admin
+from django.urls import path,include
+urlpatterns = [
+path('admin/', admin.site.urls),
+path('',include('myapp.urls')),
+]
+Store all html files within templates folder in myapp
+#############################################################################################################################################################################################################
+EX.1
+Myapp\urls.py
+from django.urls import path
+from .import views
+urlpatterns=[
+path('',views.home,name="home"),
+path('about',views.about,name="about"),
+]
+Myapp\views.py
+from django.shortcuts import render
+# Create your views here.
+from django.http import HttpResponse
+# Create your views here.
+def home(response):
+return HttpResponse("<h1>Hello</h1>")
+def about(response):
+return HttpResponse("<h1>Hiii</h1>")
+#############################################################################################################################################################################################################
+EX.2
+Myapp\urls.py
+from django.urls import path
+from .import views
+urlpatterns = [
+path('',views.name,name="name"),
+path('oddeven/',views.oddeven, name="oddeven"),
+path('add/',views.add, name="add"),
+]
+Myapp\templates\add.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Addition</title>
+</head>
+<body>
+<h1>Addition</h1>
+<form method="GET" >
+<label for="num1">Enter the first number:</label>
+<input type="number" id="num1" name="num1" required>
+<label for="num2">Enter the second number:</label>
+<input type="number" id="num2" name="num2" required>
+<button type="submit">Add</button>
+</form>
+{% if result %}
+<p>{{ result }}</p>
+{% endif %}
+</body>
+</html>
+Name.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>OddEven</title>
+</head>
+<body>
+<h3>Name Filter</h3>
+<form method="GET">
+<label for="character">Enter a character:</label>
+<input type="text" id="character" name="character" />
+<button type="submit">Search</button>
+</form>
+{% if name_result %}
+<ul>
+{% for name in name_result %}
+<li>{{ name }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</body>
+</html>
+Oddeven.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>OddEven</title>
+</head>
+<body>
+<h3>ODD or EVEN Checker</h3>
+<form method="GET">
+<label for="number">Enter a number:</label>
+<input type="text" id="number" name="number" />
+<button type="submit">Check</button>
+</form>
+{% if number_result %}
+<p>{{ number_result }}</p>
+{% endif %}
+</body>
+</html>
+Myapp\views.py
+from django.shortcuts import render
+# View to add two numbers
+def add(request):
+a = request.GET.get('num1')
+b = request.GET.get('num2')
+result = ''
+if a and b:
+a = int(a)
+b = int(b)
+c = a + b
+result = f'Addition of two numbers is {c}'
+return render(request, 'add.html', {'result': result})
+# View to determine if a number is odd or even
+def oddeven(request):
+number_result = None
+number = request.GET.get('number')
+if number:
+try:
+number = int(number)
+number_result = f"{number} is {'even' if number % 2 == 0 else 'odd'}."
+except ValueError:
+number_result = 'Please enter a valid number.'
+return render(request, 'oddeven.html', {'number_result': number_result})
+# View to find names starting with a specific character
+def name(request):
+name_result = None
+char = request.GET.get('character')
+if char:
+names = ['Hello', 'Hi', 'Harry', 'Hexa', 'Henry', 'Jack', 'Johny', 'Jeya', 'Varshini', 'Varsha']
+name_result = [name for name in names if name.lower().startswith(char.lower())]
+return render(request, 'name.html', {'name_result': name_result})
+#############################################################################################################################################################################################################
+EX.3:
+Settings.py:
+'DIRS': [BASE_DIR / 'templates'],
+Myapp\templates\signup.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>signup</title>
+</head>
+<body>
+<h1>Registration</h1>
+<form method="post">
+{% csrf_token %}
+<label for="username">Name:</label>
+<input type="text" id="username" name="username" required><br><br>
+<label for="email">Email:</label>
+<input type="email" id="email" name="email" required><br><br>
+<label for="password">Password:</label>
+<input type="password" id="password" name="password" required><br><br>
+<input type="submit" value="Sign up">
+</form>
+</body>
+</html>
+Success.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+</head>
+<body>
+<h1>registered successfully</h1>
+</body>
+</html>
+Myapp\forms.py
+from django import forms
+from .models import UserRegistration
+class UserRegistrationForm(forms.ModelForm):
+class Meta:
+model = UserRegistration
+fields = ['username', 'email', 'password']
+myapp\models.py
+from django.db import models
+# Create your models here.
+class UserRegistration(models.Model):
+username = models.CharField(max_length=100)
+email = models.EmailField()
+password = models.CharField(max_length=100)
+def __str__(self):
+return self.name
+myapp\urls.py
+from django.urls import path
+from . import views
+urlpatterns = [
+path('', views.register, name='signup'), # Make sure this view is defined
+]
+Myapp\views.py
+from django.shortcuts import render
+from .forms import UserRegistrationForm
+def register(request):
+if request.method == 'POST':
+form = UserRegistrationForm(request.POST)
+if form.is_valid():
+form.save()
+return render(request, 'success.html')
+else:
+form = UserRegistrationForm()
+return render(request, 'signup.html', {'form': form})
+EX.4:
+Myapp\templates\login.html:
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+</head>
+<body>
+<h1>Login</h1>
+<form method="POST">
+{% csrf_token %}
+<label for="username">Username:</label>
+<input type="text" id="username" name="username" required><br><br>
+<label for="password">Password:</label>
+<input type="password" id="password" name="password" required><br><br>
+<button type="submit">Login</button>
+</form>
+</body>
+</html>
+Myapp\urls.py:
+from django.urls import path
+from . import views
+urlpatterns = [
+path('', views.login_view, name='login'),
+path('profile/', views.profile_view, name='profile'),
+]
+Myapp\views.py:
+from django.shortcuts import render
+# Create your views here.
+from django.http import HttpResponse
+# View to handle login form submission and set session and cookies
+def login_view(request):
+if request.method == "POST":
+username = request.POST.get('username')
+password = request.POST.get('password')
+# Store the username in session
+request.session['username'] = username
+# Create response object
+response = HttpResponse(f"Logged in as {username}. Go to the <a href='/profile/'>profile</a>.")
+# Set the username in cookies (expires in 1 hour - 3600 seconds)
+response.set_cookie('username', username, max_age=3600)
+return response
+return render(request, 'login.html')
+# View to show the profile with username from session and cookies
+def profile_view(request):
+# Get username from session
+username_from_session = request.session.get('username', 'Guest')
+# Get username from cookies
+username_from_cookie = request.COOKIES.get('username', 'Guest')
+return HttpResponse(f"Hello, {username_from_session} (Session) / {username_from_cookie} (Cookie)")
+#############################################################################################################################################################################################################
+EX.5
+settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'arthyit@kamarajengg.edu.in'
+EMAIL_HOST_PASSWORD = ' '
+views.py
+from django.core.mail import send_mail
+from django.conf import settings
+def send_email(request):
+send_mail(
+'Welcome Party - reg.',
+'Greetings!!! Welcome to the Department of Information Technology.',
+settings.EMAIL_HOST_USER,
+['arthyanu@gmail.com'],
+fail_silently=False,
+)
+return render(request, 'sendMail.html')
+urls.py
+path('', views.send_email, name='send_email'),
+sendMail.html
+<h1>Mail Successfully Sent</h1>
+#############################################################################################################################################################################################################
+EX.6
+model.py
+class MyModel(models.Model):
+name = models.CharField(max_length=100)
+description = models.TextField()
+def __str__(self):
+return self.name
+views.py
+--------------
+from .models import MyModel
+from django.shortcuts import render, redirect,get_object_or_404
+def create1(request):
+if request.method == 'POST':
+name = request.POST.get('name')
+description = request.POST.get('description')
+MyModel.objects.create(name=name, description=description)
+return HttpResponse("Record created successfully")
+return render(request, 'create.html')
+def read(request):
+objects = MyModel.objects.all()
+return render(request, 'read.html', {'objects': objects})
+def update(request, pk):
+instance = get_object_or_404(MyModel, pk=pk)
+if request.method == 'POST':
+name = request.POST.get('name')
+description = request.POST.get('description')
+instance.name = name
+instance.description = description
+instance.save()
+return HttpResponse("Record updated successfully")
+return render(request, 'update.html', {'instance': instance})
+def delete(request, pk):
+instance = get_object_or_404(MyModel, pk=pk)
+if request.method == 'POST':
+instance.delete()
+return HttpResponse("Record deleted successfully")
+return render(request, 'delete.html', {'instance': instance})
+create.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Create</title>
+</head>
+<body>
+<h1>Create Record</h1>
+<form method="post">
+{% csrf_token %}
+Name: <input type="text" name="name"><br>
+Description: <textarea name="description"></textarea><br>
+<input type="submit" value="Submit">
+</form>
+</body>
+</html>
+read.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Read</title>
+</head>
+<body>
+<h1>Read Records</h1>
+<ul>
+{% for object in objects %}
+<li>{{ object.name }} - {{ object.description }}</li>
+{% empty %}
+<li>No records found</li>
+{% endfor %}
+</ul>
+</body>
+</html>
+update.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Update</title>
+</head>
+<body>
+<h1>Update Record</h1>
+<form method="post">
+{% csrf_token %}
+Name: <input type="text" name="name" value="{{ instance.name }}"><br>
+Description: <textarea name="description">{{ instance.description }}</textarea><br>
+<input type="submit" value="Update">
+</form>
+</body>
+</html>
+delete.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Delete</title>
+</head>
+<body>
+<h1>Delete Record</h1>
+<p>Are you sure you want to delete "{{ instance.name }}"?</p>
+<form method="post">
+{% csrf_token %}
+<input type="submit" value="Delete">
+</form>
+</body>
+</html>
+urls.py
+path('createtab/', views.create1, name='createtab'),
+path('readtab/', views.read, name='readtab'),
+path('<int:pk>/updatetab/', views.update, name='updatetab'),
+path('<int:pk>/deletetab/', views.delete, name='deletetab')
